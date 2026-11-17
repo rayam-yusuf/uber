@@ -1,0 +1,127 @@
+{% extends "common/base.html" %}
+
+{% block title %}Sign in | Easy Rides{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<section class="auth-screen">
+    <div class="auth-login-layout">
+        <aside class="auth-showcase">
+            <div class="auth-showcase-copy">
+                <span class="uber-pill">ONE ACCOUNT · EVERYTHING</span>
+                <h1>Arrive in Style</h1>
+                <p>Effortless luxury rides, executive comfort, and punctuality unified under your single Uber profile.</p>
+            </div>
+            {% comment %} <div class="auth-ride-preview">
+                <div class="auth-ride-preview-top">
+                    <strong>Uber Black</strong>
+                    <span class="uber-pill">2 min away</span>
+                </div>
+                <div class="auth-ride-preview-bottom">
+                    <i class="bx bx-navigation" aria-hidden="true"></i>
+                    <div><strong>Financial District</strong><br><span class="uber-help">Optimal route dispatched</span></div>
+                </div>
+            </div>
+            <div class="auth-inline-between"><span>4.9 · Global Driver Network</span><span class="uber-status">Verified</span></div> {% endcomment %}
+        </aside>
+
+        <section class="auth-auth-card" aria-labelledby="login-title">
+            <span class="auth-eyebrow">Sign in</span>
+            <h1 class="auth-heading" id="login-title">Sign in with your username, phone, or email</h1>
+            <p class="auth-copy">Sign in to access your rides, orders, and earnings.</p>
+
+            <form class="auth-form" method="post" action="{% url 'login' %}" id="login-form">
+                {% csrf_token %}
+                <div class="auth-tabs" role="tablist" aria-label="Sign-in method">
+                    <button class="auth-tab" type="button" role="tab" aria-selected="true" data-login-mode="phone">Phone Number</button>
+                    <button class="auth-tab" type="button" role="tab" aria-selected="false" data-login-mode="email">Email Address</button>
+                    <button class="auth-tab" type="button" role="tab" aria-selected="false" data-login-mode="username">Username</button>
+                </div>
+                <div class="auth-form-field">
+                    <label class="uber-label" for="{{ form.username.id_for_label }}" id="identifier-label">Mobile Number</label>
+                    <div class="auth-identifier-control" id="identifier-control">
+                        <span class="auth-country-prefix" id="country-prefix">UG +256</span>
+                        {{ form.username }}
+                    </div>
+                    {% for error in form.username.errors %}<span class="uber-help">{{ error }}</span>{% endfor %}
+                </div>
+                <div class="auth-form-field" id="password-step" {% if not form.is_bound %}hidden{% endif %}>
+                    <label class="uber-label" for="{{ form.password.id_for_label }}">Password</label>
+                    {{ form.password }}
+                    {% for error in form.password.errors %}<span class="uber-help">{{ error }}</span>{% endfor %}
+                </div>
+                {% if error_message %}<p class="uber-help" role="alert">{{ error_message }}</p>{% endif %}
+                <button class="uber-button auth-submit" id="login-continue" type="button">{% if form.is_bound %}Sign in{% else %}Continue{% endif %} <i class="bx bx-right-arrow-alt" aria-hidden="true"></i></button>
+            </form>
+
+            <p class="auth-disclaimer">By continuing, you agree to receive SMS notifications. Message and data rates may apply.</p>
+
+            <div class="auth-account-switch"><span>New to Easy Rides?</span><a href="{% url 'auth' %}">Create an account <i class="bx bx-chevron-right" aria-hidden="true"></i></a></div>
+        </section>
+    </div>
+</section>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+    const loginTabs = document.querySelectorAll('[data-login-mode]');
+    const identifier = document.getElementById('{{ form.username.id_for_label }}');
+    const identifierControl = document.getElementById('identifier-control');
+    const identifierLabel = document.getElementById('identifier-label');
+    const passwordStep = document.getElementById('password-step');
+    const continueButton = document.getElementById('login-continue');
+    const password = document.getElementById('{{ form.password.id_for_label }}');
+    const loginForm = document.getElementById('login-form');
+    identifier.placeholder = '07XXXXXXXX';
+
+    function setLoginMode(mode) {
+        loginTabs.forEach((item) => item.setAttribute('aria-selected', String(item.dataset.loginMode === mode)));
+        const isEmail = mode === 'email';
+        const isUsername = mode === 'username';
+        identifierControl.classList.toggle('is-email', isEmail || isUsername);
+        document.getElementById('country-prefix').hidden = isEmail || isUsername;
+        identifier.type = isEmail ? 'email' : isUsername ? 'text' : 'tel';
+        identifier.placeholder = isEmail ? 'name@example.com' : isUsername ? 'Your username' : '07XXXXXXXX';
+        identifierLabel.textContent = isEmail ? 'Email Address' : isUsername ? 'Username' : 'Mobile Number';
+    }
+
+    loginTabs.forEach((tab) => tab.addEventListener('click', () => {
+        setLoginMode(tab.dataset.loginMode);
+    }));
+
+    if (identifier.value.includes('@')) setLoginMode('email');
+
+    continueButton.addEventListener('click', () => {
+        if (!identifier.value.trim()) {
+            identifier.focus();
+            window.showSnackbar({
+                type: 'error',
+                title: 'Phone number or email required',
+                message: 'Enter your phone number or email to continue.'
+            });
+            return;
+        }
+        if (passwordStep.hidden) {
+            passwordStep.hidden = false;
+            continueButton.innerHTML = 'Sign in <i class="bx bx-right-arrow-alt" aria-hidden="true"></i>';
+            password.focus();
+        } else {
+            loginForm.requestSubmit();
+        }
+    });
+
+    identifier.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            continueButton.click();
+        }
+    });
+
+    password.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            loginForm.requestSubmit();
+        }
+    });
+</script>
+{% endblock %}
